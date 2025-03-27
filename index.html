@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mostrar Código de Respuesta de API</title>
+    <title>Mostrar Código y Resultado de API</title>
     <style>
         body {
             font-family: sans-serif;
@@ -20,11 +20,19 @@
         }
         .response-code {
             font-style: italic;
+            margin-bottom: 5px;
+        }
+        .response-body {
+            font-family: monospace;
+            background-color: #f9f9f9;
+            padding: 8px;
+            border-radius: 3px;
+            overflow-x: auto; /* Para evitar desbordamiento horizontal */
         }
     </style>
 </head>
 <body>
-    <h1>Código de Respuesta de API</h1>
+    <h1>Código y Resultado de API</h1>
 
     <div id="api-results">
         </div>
@@ -34,6 +42,7 @@
             try {
                 const response = await fetch(url);
                 const responseCode = response.status;
+                const responseData = await response.json(); // Obtener el cuerpo de la respuesta como JSON
 
                 const resultsDiv = document.getElementById('api-results');
                 const apiCallDiv = document.createElement('div');
@@ -47,8 +56,13 @@
                 codeElement.classList.add('response-code');
                 codeElement.textContent = `Código de respuesta: ${responseCode}`;
 
+                const bodyElement = document.createElement('pre'); // Usamos <pre> para preservar el formato
+                bodyElement.classList.add('response-body');
+                bodyElement.textContent = JSON.stringify(responseData, null, 2); // Formatear el JSON para mejor lectura
+
                 apiCallDiv.appendChild(urlElement);
                 apiCallDiv.appendChild(codeElement);
+                apiCallDiv.appendChild(bodyElement);
                 resultsDiv.appendChild(apiCallDiv);
 
             } catch (error) {
