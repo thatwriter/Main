@@ -2,9 +2,9 @@
 <html>
 <body id="resultado">
   <script>
-    fetch('https://api-qr4h.onrender.com/random')
-      .then(response => response.text())
-      .then(data => document.getElementById('resultado').textContent = data)
+    fetch('http://201.175.220.78/random')
+      .then(response => response.json())
+      .then(data => document.getElementById('resultado').textContent = JSON.stringify(data, null, 2))
       .catch(error => document.getElementById('resultado').textContent = 'Error al cargar');
   </script>
 </body>
