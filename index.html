@@ -1,98 +1,11 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mostrar Código y Resultado de API</title>
-    <style>
-        body {
-            font-family: sans-serif;
-        }
-        .api-call {
-            margin-bottom: 15px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .api-url {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .response-code {
-            font-style: italic;
-            margin-bottom: 5px;
-        }
-        .response-body {
-            font-family: monospace;
-            background-color: #f9f9f9;
-            padding: 8px;
-            border-radius: 3px;
-            overflow-x: auto; /* Para evitar desbordamiento horizontal */
-        }
-    </style>
-</head>
-<body>
-    <h1>Código y Resultado de API</h1>
-
-    <div id="api-results">
-        </div>
-
-    <script>
-        async function callApi(url) {
-            try {
-                const response = await fetch(url);
-                const responseCode = response.status;
-                const responseData = await response.json(); // Obtener el cuerpo de la respuesta como JSON
-
-                const resultsDiv = document.getElementById('api-results');
-                const apiCallDiv = document.createElement('div');
-                apiCallDiv.classList.add('api-call');
-
-                const urlElement = document.createElement('p');
-                urlElement.classList.add('api-url');
-                urlElement.textContent = `Llamada a: ${url}`;
-
-                const codeElement = document.createElement('p');
-                codeElement.classList.add('response-code');
-                codeElement.textContent = `Código de respuesta: ${responseCode}`;
-
-                const bodyElement = document.createElement('pre'); // Usamos <pre> para preservar el formato
-                bodyElement.classList.add('response-body');
-                bodyElement.textContent = JSON.stringify(responseData, null, 2); // Formatear el JSON para mejor lectura
-
-                apiCallDiv.appendChild(urlElement);
-                apiCallDiv.appendChild(codeElement);
-                apiCallDiv.appendChild(bodyElement);
-                resultsDiv.appendChild(apiCallDiv);
-
-            } catch (error) {
-                const resultsDiv = document.getElementById('api-results');
-                const apiCallDiv = document.createElement('div');
-                apiCallDiv.classList.add('api-call');
-
-                const urlElement = document.createElement('p');
-                urlElement.classList.add('api-url');
-                urlElement.textContent = `Intento de llamada a: ${url}`;
-
-                const errorElement = document.createElement('p');
-                errorElement.classList.add('response-code');
-                errorElement.textContent = `Error en la llamada: ${error}`;
-
-                apiCallDiv.appendChild(urlElement);
-                apiCallDiv.appendChild(errorElement);
-                resultsDiv.appendChild(apiCallDiv);
-            }
-        }
-
-        // Lista de URLs de API que quieres llamar
-        const apiUrls = [
-            'https://api-qr4h.onrender.com/random'
-        ];
-
-        // Realizar las llamadas a la API para cada URL
-        apiUrls.forEach(url => {
-            callApi(url);
-        });
-    </script>
+<html>
+<body id="resultado">
+  <script>
+    fetch('https://api-qr4h.onrender.com/random')
+      .then(response => response.json())
+      .then(data => document.getElementById('resultado').textContent = JSON.stringify(data, null, 2))
+      .catch(error => document.getElementById('resultado').textContent = 'Error al cargar');
+  </script>
 </body>
 </html>
