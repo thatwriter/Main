@@ -49,34 +49,31 @@
 
     <script>
         async function obtenerNumero() {
-            const resultadoElement = document.getElementById('resultado');
-            resultadoElement.textContent = "Cargando...";
+        const resultadoElement = document.getElementById('resultado');
+        resultadoElement.textContent = "Cargando...";
+        
+        try {
+            const apiUrl = 'https://api-qr4h.onrender.com/random';
+            const response = await fetch(apiUrl);
             
-            try {
-                // URL de tu API en Render (asegúrate de que sea la correcta)
-                const response = await fetch('https://api-qr4h.onrender.com/random');
-                
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                resultadoElement.textContent = data.random_number;
-                resultadoElement.className = '';
-            } catch (error) {
-                console.error("Error al obtener el número:", error);
-                resultadoElement.textContent = "Error al conectar con la API";
-                resultadoElement.className = 'error';
+            if (!response.ok) {
+                throw new Error(`La API respondió con error ${response.status}`);
             }
+            
+            const data = await response.json();
+            
+            if (typeof data.random_number === 'undefined') {
+                throw new Error("La API no devolvió un número válido");
+            }
+            
+            resultadoElement.textContent = data.random_number;
+            resultadoElement.className = '';
+        } catch (error) {
+            console.error("Error:", error);
+            resultadoElement.textContent = `Fallo al conectar con la API: ${error.message}`;
+            resultadoElement.className = 'error';
         }
-
-        function limpiar() {
-            document.getElementById('resultado').textContent = "...";
-            document.getElementById('resultado').className = '';
-        }
-
-        // Opcional: Obtener un número al cargar la página
-        window.addEventListener('DOMContentLoaded', obtenerNumero);
+    }
     </script>
 </body>
 </html>
