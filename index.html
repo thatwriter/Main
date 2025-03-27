@@ -1,39 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mostrar número aleatorio</title>
+    <title>Llamada a API</title>
 </head>
 <body>
-  Damn
-  <div id="resultado"></div>
+    <h1>Número Aleatorio:</h1>
+    <p id="resultado"></p>
 
-  <script>
-    const express = require('express');
-const cors = require('cors');
-const app = express();
+    <script>
+        async function obtenerNumeroAleatorio() {
+            try {
+                const respuesta = await fetch('https://api-qr4h.onrender.com/random');
+                const datos = await respuesta.json();
+                document.getElementById('resultado').textContent = datos.random_number;
+            } catch (error) {
+                console.error('Error al obtener el número aleatorio:', error);
+                document.getElementById('resultado').textContent = 'Error al obtener el número aleatorio.';
+            }
+        }
 
-app.use(cors());
-
-app.get('/random', (req, res) => {
-  const randomNumber = Math.floor(Math.random() * 100);
-  res.json({ random_number: randomNumber });
-});
-
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
-    const url = 'https://api-qr4h.onrender.com/random';
-
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        // Accede al número aleatorio desde la respuesta JSON
-        const numeroAleatorio = data.random_number;
-
-        // Muestra el número en el HTML
-        document.getElementById('resultado').textContent = `Número aleatorio: ${numeroAleatorio}`;
-      })
-      .catch(error => console.error('Error:', error));
-  </script>
+        obtenerNumeroAleatorio();
+    </script>
 </body>
 </html>
