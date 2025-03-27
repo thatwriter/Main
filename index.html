@@ -1,79 +1,84 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Números Aleatorios</title>
+    <title>Hormigas en Movimiento</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            text-align: center;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px 2px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        #resultado {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 20px 0;
-            padding: 10px;
-            border: 1px dashed #ccc;
-            min-height: 30px;
-        }
-        .error {
-            color: red;
-        }
+        body { margin: 0; overflow: hidden; background: #f0f0f0; }
+        canvas { display: block; background: #222; }
     </style>
 </head>
 <body>
-    <h1>Generador de Números Aleatorios</h1>
-    <p>Obtén un número aleatorio entre 1 y 10 desde la API:</p>
-    
-    <div id="resultado">...</div>
-    
-    <button onclick="obtenerNumero()">Obtener número</button>
-    <button onclick="limpiar()">Limpiar</button>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
-        async function obtenerNumero() {
-        const resultadoElement = document.getElementById('resultado');
-        resultadoElement.textContent = "Cargando...";
-        
-        try {
-            const apiUrl = 'https://api-qr4h.onrender.com/random';
-            const response = await fetch(apiUrl);
-            
-            if (!response.ok) {
-                throw new Error(`La API respondió con error ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (typeof data.random_number === 'undefined') {
-                throw new Error("La API no devolvió un número válido");
-            }
-            
-            resultadoElement.textContent = data.random_number;
-            resultadoElement.className = '';
-        } catch (error) {
-            console.error("Error:", error);
-            resultadoElement.textContent = `Fallo al conectar con la API: ${error.message}`;
-            resultadoElement.className = 'error';
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const hormigas = [];
+        const apiUrl = 'https://tu-api-render.com/hormigas?cantidad=20';
+        canvas.addEventListener('mousemove', (e) => {
+    const mouse = { x: e.clientX, y: e.clientY };
+    hormigas.forEach(h => {
+        const dx = h.x - mouse.x;
+        const dy = h.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) { // Radio de huida
+            h.x += dx / dist * 2;
+            h.y += dy / dist * 2;
         }
-    }
+    });
+});
+        // Cargar hormigas desde la API
+        async function cargarHormigas() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                hormigas.push(...data.hormigas);
+            } catch (error) {
+                console.error("Error al cargar hormigas:", error);
+                // Generar hormigas locales si la API falla
+                for (let i = 0; i < 20; i++) {
+                    hormigas.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height
+                    });
+                }
+            }
+        }
+
+        // Dibujar hormigas
+        function dibujarHormigas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hormigas.forEach(hormiga => {
+                ctx.beginPath();
+                ctx.arc(hormiga.x, hormiga.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#FF5722';
+                ctx.fill();
+            });
+        }
+
+        // Mover hormigas aleatoriamente
+        function moverHormigas() {
+            hormigas.forEach(hormiga => {
+                hormiga.x += (Math.random() - 0.5) * 2;
+                hormiga.y += (Math.random() - 0.5) * 2;
+                // Mantener dentro del canvas
+                hormiga.x = Math.max(0, Math.min(canvas.width, hormiga.x));
+                hormiga.y = Math.max(0, Math.min(canvas.height, hormiga.y));
+            });
+        }
+
+        // Bucle del juego
+        async function gameLoop() {
+            moverHormigas();
+            dibujarHormigas();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Iniciar
+        (async () => {
+            await cargarHormigas();
+            gameLoop();
+        })();
     </script>
 </body>
 </html>
