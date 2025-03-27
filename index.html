@@ -1,11 +1,24 @@
 <!DOCTYPE html>
 <html>
-<body id="resultado">
+<head>
+  <title>Mostrar número aleatorio</title>
+</head>
+<body>
+  <div id="resultado"></div>
+
   <script>
-    fetch('http://201.175.220.78/random')
+    const url = 'https://api-qr4h.onrender.com/random';
+
+    fetch(url)
       .then(response => response.json())
-      .then(data => document.getElementById('resultado').textContent = JSON.stringify(data, null, 2))
-      .catch(error => document.getElementById('resultado').textContent = 'Error al cargar');
+      .then(data => {
+        // Accede al número aleatorio desde la respuesta JSON
+        const numeroAleatorio = data.random_number;
+
+        // Muestra el número en el HTML
+        document.getElementById('resultado').textContent = `Número aleatorio: ${numeroAleatorio}`;
+      })
+      .catch(error => console.error('Error:', error));
   </script>
 </body>
 </html>
