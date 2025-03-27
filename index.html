@@ -5,20 +5,34 @@
 </head>
 <body>
     <h1>Número Aleatorio:</h1>
-    <p id="resultado"></p>
+    <p id="resultado">Cargando...</p>
+    <button onclick="obtenerNumeroAleatorio()">Reintentar</button>
 
     <script>
         async function obtenerNumeroAleatorio() {
+            const resultadoElement = document.getElementById('resultado');
+            resultadoElement.textContent = 'Cargando...';
+            
             try {
-                const respuesta = await fetch('https://api-qr4h.onrender.com/random');
+                // Usamos un proxy CORS
+                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                const apiUrl = 'https://api-qr4h.onrender.com/random';
+                
+                const respuesta = await fetch(proxyUrl + apiUrl);
+                
+                if (!respuesta.ok) {
+                    throw new Error(`Error HTTP: ${respuesta.status}`);
+                }
+                
                 const datos = await respuesta.json();
-                document.getElementById('resultado').textContent = datos.random_number;
+                resultadoElement.textContent = datos.random_number;
             } catch (error) {
-                console.error('Error al obtener el número aleatorio:', error);
-                document.getElementById('resultado').textContent = 'Error al obtener el número aleatorio.';
+                console.error('Error:', error);
+                resultadoElement.textContent = 'Error al cargar. ¿La API está activa?';
             }
         }
 
+        // Llamamos a la función al cargar
         obtenerNumeroAleatorio();
     </script>
 </body>
