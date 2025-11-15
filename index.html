@@ -78,7 +78,7 @@
     <script>
         const video = document.getElementById('video');
         const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const resultDiv = document.getElementById('result');
         const qrDataInput = document.getElementById('qrData');
         const submitBtn = document.getElementById('submitBtn');
@@ -127,12 +127,12 @@
             if (partes[0] === 'CONF' && partes.length >= 3) {
                 id_boleto = partes[1]; // El ID del boleto es la segunda parte
             } else {
-                alert("Formato de QR no válido");
+                alert("Formato de QR no válido. Debe ser CONF-XXX-XXX");
                 return;
             }
             
             const formData = {
-                id_boleto: qrCode,
+                id_boleto: id_boleto,
                 asistentes_reales: document.getElementById('asistentes_reales').value
             };
             
