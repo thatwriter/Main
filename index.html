@@ -66,8 +66,8 @@
         </div>
         
         <div class="form-group">
-            <label for="asistencia">Dato Numérico de Asistencia:</label>
-            <input type="number" id="asistencia" name="asistencia" placeholder="Ingrese número de asistencia" required>
+            <label for="asistentes_reales">Número de Asistentes:</label>
+            <input type="number" id="asistentes_reales" name="asistentes_reales" placeholder="Ingrese número de asistentes" required>
         </div>
         
         <button type="submit" id="submitBtn" disabled>Enviar Asistencia</button>
@@ -119,9 +119,21 @@
         document.getElementById('asistenciaForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
+            // Extraer el ID del boleto del código QR
+            const qrCode = qrDataInput.value;
+            const partes = qrCode.split('-');
+            let id_boleto = '';
+            
+            if (partes[0] === 'CONF' && partes.length >= 3) {
+                id_boleto = partes[1]; // El ID del boleto es la segunda parte
+            } else {
+                alert("Formato de QR no válido");
+                return;
+            }
+            
             const formData = {
-                contenido: qrDataInput.value,
-                asistencia: document.getElementById('asistencia').value
+                id_boleto: id_boleto,
+                asistentes_reales: document.getElementById('asistentes_reales').value
             };
             
             // Enviar al servidor de PythonAnywhere
