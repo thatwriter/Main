@@ -1,84 +1,55 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Hormigas en Movimiento</title>
-    <style>
-        body { margin: 0; overflow: hidden; background: #f0f0f0; }
-        canvas { display: block; background: #222; }
-    </style>
+    <title>Lector QR</title>
 </head>
+
 <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <video id="video" width="100%"></video>
+    <div id="result"></div>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
+        const video = document.getElementById('video');
+        const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const hormigas = [];
-        const apiUrl = 'https://tu-api-render.com/hormigas?cantidad=20';
-        canvas.addEventListener('mousemove', (e) => {
-    const mouse = { x: e.clientX, y: e.clientY };
-    hormigas.forEach(h => {
-        const dx = h.x - mouse.x;
-        const dy = h.y - mouse.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 100) { // Radio de huida
-            h.x += dx / dist * 2;
-            h.y += dy / dist * 2;
-        }
-    });
-});
-        // Cargar hormigas desde la API
-        async function cargarHormigas() {
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                hormigas.push(...data.hormigas);
-            } catch (error) {
-                console.error("Error al cargar hormigas:", error);
-                // Generar hormigas locales si la API falla
-                for (let i = 0; i < 20; i++) {
-                    hormigas.push({
-                        x: Math.random() * canvas.width,
-                        y: Math.random() * canvas.height
-                    });
+        const resultDiv = document.getElementById('result');
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(stream => {
+                video.srcObject = stream;
+                video.setAttribute('playsinline', true);
+                video.play();
+                requestAnimationFrame(tick);
+            });
+
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code) {
+                    resultDiv.innerHTML = `<p>QR encontrado: ${code.data}</p>`;
+                    // Enviar al servidor de PythonAnywhere
+                    fetch('https://edgarabyss.pythonanywhere.com/api/qr', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ contenido: code.data })
+                    })
+                        .then(response => response.json())
+                        .then(data => console.log("Respuesta del servidor:", data))
+                        .catch(error => console.error("Error al enviar:", error));
                 }
             }
+            requestAnimationFrame(tick);
         }
-
-        // Dibujar hormigas
-        function dibujarHormigas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hormigas.forEach(hormiga => {
-                ctx.beginPath();
-                ctx.arc(hormiga.x, hormiga.y, 5, 0, Math.PI * 2);
-                ctx.fillStyle = '#FF5722';
-                ctx.fill();
-            });
-        }
-
-        // Mover hormigas aleatoriamente
-        function moverHormigas() {
-            hormigas.forEach(hormiga => {
-                hormiga.x += (Math.random() - 0.5) * 2;
-                hormiga.y += (Math.random() - 0.5) * 2;
-                // Mantener dentro del canvas
-                hormiga.x = Math.max(0, Math.min(canvas.width, hormiga.x));
-                hormiga.y = Math.max(0, Math.min(canvas.height, hormiga.y));
-            });
-        }
-
-        // Bucle del juego
-        async function gameLoop() {
-            moverHormigas();
-            dibujarHormigas();
-            requestAnimationFrame(gameLoop);
-        }
-
-        // Iniciar
-        (async () => {
-            await cargarHormigas();
-            gameLoop();
-        })();
     </script>
 </body>
+
 </html>
