@@ -6,72 +6,37 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
             padding: 20px;
         }
-        #video {
+        video {
             width: 100%;
-            max-width: 400px;
-            margin-bottom: 10px;
+            max-width: 500px;
+            margin: 10px 0;
         }
         #result {
-            margin: 10px 0;
+            margin-top: 20px;
             padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 4px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 8px;
             border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+            background-color: #f9f9f9;
         }
         button {
-            background-color: #4CAF50;
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #007bff;
             color: white;
-            padding: 10px 15px;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
         }
         button:hover {
-            background-color: #45a049;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
+            background-color: #0056b3;
         }
     </style>
 </head>
 
 <body>
-    <h1>Formulario de Asistencia</h1>
-    
-    <form id="asistenciaForm">
-        <div class="form-group">
-            <label for="qrData">Código QR:</label>
-            <video id="video" width="100%"></video>
-            <div id="result">No se ha detectado ningún código QR</div>
-            <input type="hidden" id="qrData" name="qrData" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="asistencia">Dato Numérico de Asistencia:</label>
-            <input type="number" id="asistencia" name="asistencia" placeholder="Ingrese número de asistencia" required>
-        </div>
-        
-        <button type="submit" id="submitBtn" disabled>Enviar Asistencia</button>
-    </form>
+    <h1>Lector QR</h1>
+    <video id="video" playsinline></video>
+    <div id="result">Escaneando...</div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
@@ -80,22 +45,31 @@
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const resultDiv = document.getElementById('result');
-        const qrDataInput = document.getElementById('qrData');
-        const submitBtn = document.getElementById('submitBtn');
-        let qrDetected = false;
 
-        // Acceder a la cámara
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
             .then(stream => {
                 video.srcObject = stream;
                 video.setAttribute('playsinline', true);
                 video.play();
                 requestAnimationFrame(tick);
-            })
-            .catch(err => {
-                console.error("Error al acceder a la cámara:", err);
-                resultDiv.innerHTML = "Error al acceder a la cámara: " + err.message;
             });
+
+        // Función de ofuscación
+        function ofuscarNumero(numeroStr) {
+            const sustitucion = {
+                '0': '7',
+                '1': '8',
+                '2': '9',
+                '3': '0',
+                '4': '1',
+                '5': '2',
+                '6': '3',
+                '7': '4',
+                '8': '5',
+                '9': '6'
+            };
+            return numeroStr.split('').map(digito => sustitucion[digito] || digito).join('');
+        }
 
         function tick() {
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
@@ -105,43 +79,48 @@
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-                if (code && !qrDetected) {
-                    resultDiv.innerHTML = `QR detectado: ${code.data}`;
-                    qrDataInput.value = code.data;
-                    qrDetected = true;
-                    submitBtn.disabled = false; // Habilitar botón de envío
+                if (code) {
+                    const contenido = code.data;
+                    resultDiv.innerHTML = `<p>QR encontrado: <strong>${contenido}</strong></p>`;
+
+                    // Analizar el formato CONF-XXX-YYY
+                    const partes = contenido.split('-');
+                    if (partes[0] === 'CONF' && partes.length >= 3) {
+                        const idBoleto = partes[1];
+                        const asistentesEsperados = partes[2];
+
+                        const idOfuscado = ofuscarNumero(idBoleto);
+                        const asistentesOfuscados = ofuscarNumero(asistentesEsperados);
+
+                        resultDiv.innerHTML += `<p>ID Boleto Original: ${idBoleto}</p>`;
+                        resultDiv.innerHTML += `<p>ID Boleto Ofuscado: ${idOfuscado}</p>`;
+                        resultDiv.innerHTML += `<p>Asistentes Esperados Original: ${asistentesEsperados}</p>`;
+                        resultDiv.innerHTML += `<p>Asistentes Esperados Ofuscados: ${asistentesOfuscados}</p>`;
+
+                        // Enviar al servidor de PythonAnywhere
+                        fetch('https://edgarabyss.pythonanywhere.com/api/qr', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ contenido: contenido })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log("Respuesta del servidor:", data);
+                                resultDiv.innerHTML += `<p>✅ Enviado al servidor</p>`;
+                            })
+                            .catch(error => {
+                                console.error("Error al enviar:", error);
+                                resultDiv.innerHTML += `<p>❌ Error al enviar: ${error.message}</p>`;
+                            });
+                    } else {
+                        resultDiv.innerHTML += `<p>❌ Formato de QR no reconocido. Debe ser CONF-XXX-YYY</p>`;
+                    }
                 }
             }
             requestAnimationFrame(tick);
         }
-
-        // Manejar el envío del formulario
-        document.getElementById('asistenciaForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                qr: qrDataInput.value,
-                asistencia: document.getElementById('asistencia').value
-            };
-            
-            // Enviar al servidor de PythonAnywhere
-            fetch('https://edgarabyss.pythonanywhere.com/api/qr', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log("Respuesta del servidor:", data);
-                alert("Asistencia registrada exitosamente");
-            })
-            .catch(error => {
-                console.error("Error al enviar:", error);
-                alert("Error al registrar la asistencia");
-            });
-        });
     </script>
 </body>
 
